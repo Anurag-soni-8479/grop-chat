@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Chat</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: #1e1e1e;
+            color: white;
+            height: 100vh;
+        }
+
+        /* Join Screen */
+
+        #joinScreen {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .card {
+            width: 350px;
+            background: #252526;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0, 0, 0, .4);
+        }
+
+        .card h1 {
+            margin-bottom: 20px;
+            color: #4fc3f7;
+        }
+
+        .card input {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: #3c3c3c;
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .card button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: #0078d4;
+            color: white;
+            cursor: pointer;
+        }
+
+        .card button:hover {
+            background: #0098ff;
+        }
+
+        /* Chat UI */
+
+        #chatApp {
+            display: none;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: #252526;
+            border-right: 1px solid #333;
+            padding: 20px;
+        }
+
+        .sidebar h2 {
+            margin-bottom: 20px;
+            color: #4fc3f7;
+        }
+
+        .user {
+            background: #2d2d30;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .topbar {
+            height: 60px;
+            background: #252526;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            border-bottom: 1px solid #333;
+        }
+
+        .chat {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .msg {
+            background: #2d2d30;
+            width: max-content;
+            max-width: 70%;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .bottom {
+            display: flex;
+            padding: 15px;
+            background: #252526;
+            gap: 10px;
+        }
+
+        .bottom input {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: #3c3c3c;
+            color: white;
+        }
+
+        .bottom button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            background: #0078d4;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Join Screen -->
+    <div id="joinScreen">
+        <div class="card">
+            <h1>💬 Community Chat</h1>
+            <input type="text" id="username" placeholder="Enter Your Name">
+            <button onclick="joinChat()">Join Chat</button>
+        </div>
+    </div>
+
+    <!-- Chat Screen -->
+    <div id="chatApp">
+
+        <div class="sidebar">
+            <h2>Online Users</h2>
+
+            <div class="user" id="currentUser">
+                You
+            </div>
+        </div>
+
+        <div class="main">
+
+            <div class="topbar">
+                🌐 Global Community Chat
+            </div>
+
+            <div class="chat" id="chatBox">
+                <div class="msg">
+                    Welcome to the chat room 👋
+                </div>
+            </div>
+
+            <div class="bottom">
+                <input type="text" id="messageInput" placeholder="Type a message...">
+                <button onclick="sendMessage()">Send</button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        const socket = io("http://localhost:3000");
+
+        let userName = "";
+
+        function scrollToBottom() {
+            const chatBox = document.getElementById("chatBox");
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function joinChat() {
+
+            const name = document.getElementById("username").value.trim();
+
+            if (!name) {
+                alert("Please enter your name");
+                return;
+            }
+
+            userName = name;
+
+            socket.emit("join", userName);
+
+            document.getElementById("joinScreen").style.display = "none";
+            document.getElementById("chatApp").style.display = "flex";
+        }
+
+        function sendMessage() {
+
+            const input = document.getElementById("messageInput");
+
+            const text = input.value.trim();
+
+            if (!text) return;
+
+            socket.emit("chatMessage", {
+                user: userName,
+                text: text
+            });
+
+            input.value = "";
+        }
+
+        document.getElementById("messageInput").addEventListener("keypress", function (e) {
+            if (e.key === "Enter") {
+                sendMessage();
+            }
+        });
+
+        socket.on("oldMessages", (msgs) => {
+
+            const chatBox = document.getElementById("chatBox");
+
+            chatBox.innerHTML = "";
+
+            msgs.forEach(msg => {
+
+                const div = document.createElement("div");
+
+                div.className = "msg";
+
+                div.innerHTML = `<b>${msg.user}:</b> ${msg.text}`;
+
+                chatBox.appendChild(div);
+            });
+
+            scrollToBottom();
+        });
+
+        socket.on("newMessage", (msg) => {
+
+            const div = document.createElement("div");
+
+            div.className = "msg";
+
+            div.innerHTML = `<b>${msg.user}:</b> ${msg.text}`;
+
+            document.getElementById("chatBox").appendChild(div);
+
+            scrollToBottom();
+        });
+
+        socket.on("users", (users) => {
+
+            const sidebar = document.querySelector(".sidebar");
+
+            sidebar.innerHTML = "<h2>Online Users</h2>";
+
+            users.forEach(user => {
+
+                const div = document.createElement("div");
+
+                div.className = "user";
+
+                div.textContent = "🟢 " + user;
+
+                sidebar.appendChild(div);
+            });
+        });
+
+        socket.on("connect", () => {
+            console.log("Connected to server");
+        });
+
+        socket.on("disconnect", () => {
+            console.log("Disconnected from server");
+        });
+    </script>
+
+</body>
+
+</html>
