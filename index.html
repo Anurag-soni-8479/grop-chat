@@ -200,6 +200,17 @@
 
         let userName = "";
 
+        socket.on("chatCleared", () => {
+
+            const chatBox = document.getElementById("chatBox");
+
+            chatBox.innerHTML = `
+        <div class="msg">
+            Chat history was cleared automatically.
+        </div>`;
+
+        });
+
         function scrollToBottom() {
             const chatBox = document.getElementById("chatBox");
             chatBox.scrollTop = chatBox.scrollHeight;

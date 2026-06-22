@@ -60,6 +60,18 @@ io.on("connection", (socket) => {
 
 });
 
+setInterval(() => {
+
+    messages = [];
+
+    io.emit("oldMessages", []);
+
+    io.emit("chatCleared");
+
+    console.log("All messages cleared automatically");
+
+}, 6 * 60 * 60 * 1000); 
+
 server.listen(3000, () => {
     console.log("Server running on port 3000");
 });
