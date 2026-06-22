@@ -6,15 +6,19 @@ const cors = require("cors");
 const app = express();
 
 app.use(cors({
-    origin: "*"
+    origin: "https://anurag-soni-8479.github.io",
+    credentials: true
 }));
 
 const server = http.createServer(app);
 
 const io = new Server(server, {
     cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
+        origin: [
+            "https://anurag-soni-8479.github.io"
+        ],
+        methods: ["GET", "POST"],
+        credentials: true
     }
 });
 

@@ -194,7 +194,9 @@
     </div>
 
     <script>
-        const socket = io("http://localhost:3000");
+        const socket = io("https://grop-chat.onrender.com", {
+            transports: ["websocket"]
+        });
 
         let userName = "";
 
